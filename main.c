@@ -5,8 +5,11 @@
 
 #include "field.h"
 #include "game.h"
+#include "random.h"
 
 #define FALL_INTERVAL 1
+
+#define TOTAL_SHAPES 7
 
 enum
 {
@@ -15,12 +18,13 @@ enum
 
 int main(void)
 {
+    srand(time(NULL));
     int row, col;
     char field[HEIGHT][WIDTH + 1];
-    int shapes[7][4][2] = {{{0, 0}, {1, 0}, {2, 0}, {3, 0}},   {{0, 0}, {1, 0}, {0, 1}, {1, 1}},
-                           {{0, 0}, {1, 0}, {0, 1}, {-1, 0}},  {{0, 0}, {0, 1}, {0, 2}, {-1, 2}},
-                           {{0, 0}, {0, 1}, {0, 2}, {1, 2}},   {{0, 0}, {1, 0}, {1, 1}, {2, 1}},
-                           {{0, 0}, {-1, 0}, {-1, 1}, {-2, 1}}};
+    int shapes[7][4][2] = {{{-1, 0}, {0, 0}, {1, 0}, {2, 0}}, {{0, 0}, {1, 0}, {0, 1}, {1, 1}},
+                           {{-1, 0}, {0, 0}, {0, 1}, {1, 0}}, {{-1, 0}, {0, 0}, {0, 1}, {0, 2}},
+                           {{1, 0}, {0, 0}, {0, 1}, {0, 2}},  {{-1, 0}, {0, 0}, {0, 1}, {1, 1}},
+                           {{-1, 1}, {0, 1}, {0, 0}, {1, 0}}};
 
     make_field(field);
 
@@ -36,18 +40,23 @@ int main(void)
 
     timeout(delay_duration);
 
-    int i = 0;
+    int shapes_indexes[] = {I_BLOCK, O_BLOCK, T_BLOCK, J_BLOCK, L_BLOCK, S_BLOCK, Z_BLOCK};
+    fisher_yates(shapes_indexes, TOTAL_SHAPES);
+    size_t cur_shape_index = 0;
+
+    int score = 0;
 
     while (1)
     {
+        int random_shape_index = shapes_indexes[cur_shape_index];
         int cur_shape[4][2];
-        memcpy(cur_shape, shapes[i], sizeof(shapes[i]));
+        memcpy(cur_shape, shapes[random_shape_index], sizeof(shapes[random_shape_index]));
 
         int move_x = 0, move_y = 0;
 
         if (!can_move(field, cur_shape, move_x, move_y))
         {
-            printf("Your score: %d\n", i);
+            printf("Your score: %d\n", score);
             break;
         }
         paste_block(field, cur_shape);
@@ -68,6 +77,8 @@ int main(void)
             int key = getch();
             switch (key)
             {
+            case 'k':
+            case 'w':
             case KEY_UP:
                 clean_block(field, cur_shape, move_x, move_y);
                 int tmp[4][2];
@@ -83,6 +94,8 @@ int main(void)
 
                 move_block(field, cur_shape, move_x, move_y);
                 break;
+            case 'j':
+            case 's':
             case KEY_DOWN:
                 clean_block(field, cur_shape, move_x, move_y);
                 if (!can_move(field, cur_shape, move_x, move_y + 1))
@@ -93,6 +106,8 @@ int main(void)
                 move_y += 1;
                 move_block(field, cur_shape, move_x, move_y);
                 break;
+            case 'h':
+            case 'a':
             case KEY_LEFT:
                 clean_block(field, cur_shape, move_x, move_y);
                 if (!can_move(field, cur_shape, move_x - 2, move_y))
@@ -103,6 +118,8 @@ int main(void)
                 move_x -= 2;
                 move_block(field, cur_shape, move_x, move_y);
                 break;
+            case 'l':
+            case 'd':
             case KEY_RIGHT:
                 clean_block(field, cur_shape, move_x, move_y);
                 if (!can_move(field, cur_shape, move_x + 2, move_y))
@@ -113,6 +130,20 @@ int main(void)
                 move_x += 2;
                 move_block(field, cur_shape, move_x, move_y);
                 break;
+            case ' ':
+                while (1)
+                {
+                    clean_block(field, cur_shape, move_x, move_y);
+                    if (!can_move(field, cur_shape, move_x, move_y + 1))
+                    {
+                        move_block(field, cur_shape, move_x, move_y);
+                        break;
+                    }
+                    move_y += 1;
+                    move_block(field, cur_shape, move_x, move_y);
+                }
+                break;
+
             default:
                 break;
             }
@@ -130,13 +161,19 @@ int main(void)
                 else
                 {
                     move_block(field, cur_shape, move_x, move_y);
-                    remove_lines(field);
+                    score += remove_lines(field);
                     break;
                 }
                 last_fall = time(NULL);
             }
         }
-        i = (i + 1) % 7;
+
+        cur_shape_index++;
+        if (cur_shape_index == 7)
+        {
+            cur_shape_index = 0;
+            fisher_yates(shapes_indexes, TOTAL_SHAPES);
+        }
     }
 
     refresh();

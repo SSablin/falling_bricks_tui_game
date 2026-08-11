@@ -21,7 +21,7 @@ int can_move(char field[][WIDTH + 1], int block[][2], int move_x, int move_y);
 
 void move_block(char field[][WIDTH + 1], int block[][2], int move_x, int move_y);
 
-void remove_lines(char field[][WIDTH + 1]);
+unsigned int remove_lines(char field[][WIDTH + 1]);
 
 void rotate_block(int block[][2]);
 

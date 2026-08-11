@@ -68,8 +68,10 @@ static void move_down(char field[][WIDTH + 1], int filled_row_idx)
     }
 }
 
-void remove_lines(char field[][WIDTH + 1])
+unsigned int remove_lines(char field[][WIDTH + 1])
 {
+    unsigned int count = 0;
+
     for (int r = 0; r < HEIGHT - 2; r++)
     {
         int is_filled = 1;
@@ -81,12 +83,16 @@ void remove_lines(char field[][WIDTH + 1])
                 break;
             }
         }
+
         if (is_filled)
         {
             move_down(field, r);
             r--;
+            count++;
         }
     }
+
+    return count;
 }
 
 void rotate_block(int block[][2])
