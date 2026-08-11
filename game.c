@@ -44,20 +44,21 @@ int can_move(char field[][WIDTH + 1], int block[][2], int move_x, int move_y)
             return 0;
         }
 
-        if (field[y][x] != '.' && field[y][x] != ' ')
-        {
+        if (field[y][x] != ' ' && field[y][x] != '.')
             return 0;
-        }
-        if (field[y][x + 1] != '.' && field[y][x + 1] != ' ')
-        {
+        if (field[y][x + 1] != ' ' && field[y][x + 1] != '.')
             return 0;
-        }
     }
     return 1;
 }
 
 static void move_down(char field[][WIDTH + 1], int filled_row_idx)
 {
+    for (int r = filled_row_idx; r > 0; r--)
+    {
+        memcpy(field[r], field[r - 1], sizeof(field[r - 1]));
+    }
+
     for (size_t c = START_LOWER_LIMIT; c < END_LOWER_LIMIT; c++)
     {
         if (c % 2 == 0)
@@ -65,16 +66,11 @@ static void move_down(char field[][WIDTH + 1], int filled_row_idx)
         else
             field[0][c] = '.';
     }
-
-    for (size_t r = filled_row_idx; r > 1; r--)
-    {
-        memcpy(field[r], field[r - 1], sizeof(field[r - 1]));
-    }
 }
 
 void remove_lines(char field[][WIDTH + 1])
 {
-    for (size_t r = 0; r < HEIGHT - 3; r++)
+    for (int r = 0; r < HEIGHT - 2; r++)
     {
         int is_filled = 1;
         for (size_t c = START_LOWER_LIMIT; c < END_LOWER_LIMIT; c++)

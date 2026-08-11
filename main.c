@@ -34,24 +34,26 @@ int main(void)
     keypad(stdscr, 1);
     nodelay(stdscr, TRUE);
 
+    timeout(delay_duration);
+
     int i = 0;
 
     while (1)
     {
         int cur_shape[4][2];
         memcpy(cur_shape, shapes[i], sizeof(shapes[i]));
-        i = (i + 1) % 7;
 
         int move_x = 0, move_y = 0;
 
         if (!can_move(field, cur_shape, move_x, move_y))
         {
-            printf("Your score: %d", i);
+            printf("Your score: %d\n", i);
             break;
         }
         paste_block(field, cur_shape);
 
-        timeout(delay_duration);
+        time_t last_fall = time(NULL);
+        int fall_interval = 1;
 
         while (1)
         {
@@ -115,17 +117,26 @@ int main(void)
                 break;
             }
 
-            clean_block(field, cur_shape, move_x, move_y);
-            if (!can_move(field, cur_shape, move_x, move_y + 1))
+            time_t now = time(NULL);
+            if (now - last_fall >= fall_interval)
             {
-                move_block(field, cur_shape, move_x, move_y);
-                remove_lines(field);
-                break;
+                clean_block(field, cur_shape, move_x, move_y);
+                if (can_move(field, cur_shape, move_x, move_y + 1))
+                {
+                    clean_block(field, cur_shape, move_x, move_y);
+                    move_y++;
+                    move_block(field, cur_shape, move_x, move_y);
+                }
+                else
+                {
+                    move_block(field, cur_shape, move_x, move_y);
+                    remove_lines(field);
+                    break;
+                }
+                last_fall = time(NULL);
             }
-
-            move_y++;
-            move_block(field, cur_shape, move_x, move_y);
         }
+        i = (i + 1) % 7;
     }
 
     refresh();
