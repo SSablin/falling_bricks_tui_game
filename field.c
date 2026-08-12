@@ -15,11 +15,11 @@ void make_field(char field[][WIDTH + 1])
         }
     }
 
+    // fill down corners, not to broke borders
     field[HEIGHT - 1][0] = ' ';
     field[HEIGHT - 1][1] = ' ';
     field[HEIGHT - 1][WIDTH - 2] = ' ';
     field[HEIGHT - 1][WIDTH - 1] = ' ';
-
 
     for (size_t r = 0; r < HEIGHT - 1; r++)
     {

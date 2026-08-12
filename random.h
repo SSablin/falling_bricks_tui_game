@@ -2,7 +2,6 @@
 #define __RANDOM__H__
 
 #include <stdlib.h>
-#include <time.h>
 
 void fisher_yates(int arr[], size_t len);
 
