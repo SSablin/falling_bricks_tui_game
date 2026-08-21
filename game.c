@@ -110,14 +110,13 @@ void rotate_block(int block[][TOTAL_COORDINATES])
 {
     for (size_t i = 0; i < TOTAL_BRICKS; i++)
     {
-        int tmp = block[i][0];
-        block[i][0] = block[i][1];
-        block[i][1] = -tmp;
+        int tmp = block[i][1];
+        block[i][1] = block[i][0];
+        block[i][0] = -tmp;
     }
 }
 
-int try_move_block(char field[][WIDTH + 1], int block[][TOTAL_COORDINATES], int *move_x, int *move_y, int dx,
-                   int dy)
+int try_move_block(char field[][WIDTH + 1], int block[][TOTAL_COORDINATES], int *move_x, int *move_y, int dx, int dy)
 {
     clean_block(field, block, *move_x, *move_y);
     if (!can_move(field, block, *move_x + dx, *move_y + dy))
@@ -156,43 +155,67 @@ double get_fall_interval(int score)
 
     // Max speed: not faster, then 0.1 second
     double interval = 1.0 / (1.0 + level * SPEED_FACTOR);
-    return interval > 0.1 ? interval : 0.1;
+    return interval;
 }
 
 int try_rotate(char field[][WIDTH + 1], int block[][TOTAL_COORDINATES], int *move_x, int *move_y)
 {
     int backup[TOTAL_BRICKS][TOTAL_COORDINATES];
     memcpy(backup, block, sizeof(backup));
-    int old_move_y = *move_y;
+    int old_x = *move_x;
+    int old_y = *move_y;
 
     clean_block(field, block, *move_x, *move_y);
+
     rotate_block(block);
+
+    // vertical correction
+    int min_y = 0;
+    for (int i = 0; i < TOTAL_BRICKS; i++)
+    {
+        int current_y = block[i][1] + *move_y;
+        if (current_y < 0)
+        {
+            min_y = current_y;
+        }
+    }
+    if (min_y < 0)
+    {
+        *move_y -= min_y;
+    }
+
+    // Wall Kick
+    int shift_x = 0;
+    for (int i = 0; i < TOTAL_BRICKS; i++)
+    {
+        int current_x = START_X + (block[i][0] + *move_x) * CELL_WIDTH;
+
+        if (current_x < MIN_X)
+        {
+            int need_shift = MIN_X - current_x;
+            if (need_shift > shift_x)
+            {
+                shift_x = need_shift;
+            }
+        }
+        else if (current_x > MAX_X)
+        {
+            int need_shift = MAX_X - current_x;
+            if (need_shift < shift_x)
+            {
+                shift_x = need_shift;
+            }
+        }
+    }
+    *move_x += shift_x / CELL_WIDTH;
 
     if (!can_move(field, block, *move_x, *move_y))
     {
-        // backup
         memcpy(block, backup, sizeof(backup));
+        *move_x = old_x;
+        *move_y = old_y;
         move_block(field, block, *move_x, *move_y);
         return 0;
-    }
-
-    // Shift down if the figure has moved beyond the top (minus coordinates)
-    int min_y = 0;
-    for (int i = 0; i < TOTAL_BRICKS; i++)
-        if (block[i][1] + *move_y < min_y)
-            min_y = block[i][1] + *move_y;
-
-    if (min_y < 0)
-    {
-        *move_y -= min_y; // Shift down
-        if (!can_move(field, block, *move_x, *move_y))
-        {
-            // Shift down impossible -- close everything
-            memcpy(block, backup, sizeof(backup));
-            *move_y = old_move_y;
-            move_block(field, block, *move_x, *move_y);
-            return 0;
-        }
     }
 
     move_block(field, block, *move_x, *move_y);
