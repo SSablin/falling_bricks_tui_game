@@ -14,6 +14,11 @@ enum
     key_escape = 27
 };
 
+enum
+{
+    timeout = 16
+};
+
 int main(void)
 {
     srand(time(NULL));
@@ -35,7 +40,7 @@ int main(void)
     noecho();
     keypad(stdscr, 1);
     nodelay(stdscr, 0);
-    timeout(16);
+    timeout(timeout);
 
     int shapes_indexes[] = {I_BLOCK, O_BLOCK, T_BLOCK, J_BLOCK, L_BLOCK, S_BLOCK, Z_BLOCK};
     fisher_yates(shapes_indexes, TOTAL_SHAPES);
